@@ -1,40 +1,71 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 
-export default function AddDoctor() {
+const AddDoctor = () => {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [specialization, setSpecialization] = useState('');
-  const navigate = useNavigate();
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Here you would save to backend or Firebase
-    alert(`Doctor Added: ${name}, Age: ${age}, Specialization: ${specialization}`);
-
-    // Navigate back to doctor list
-    navigate('/doctors');
+    try {
+      await addDoc(collection(db, 'doctors'), {
+        name,
+        age,
+        specialization,
+        createdAt: new Date()
+      });
+      setSuccessMsg(`Doctor Added: ${name}, Age: ${age}, Specialization: ${specialization}`);
+      setName('');
+      setAge('');
+      setSpecialization('');
+    } catch (error) {
+      console.error('Error adding doctor:', error);
+    }
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: '500px', margin: '0 auto' }}>
       <h2>Add Doctor</h2>
-      <form onSubmit={handleSubmit} style={{ maxWidth: '400px' }}>
+      {successMsg && <p style={{ color: 'green' }}>{successMsg}</p>}
+      <form onSubmit={handleSubmit}>
         <div>
-          <label>Name:</label><br />
-          <input value={name} onChange={e => setName(e.target.value)} required />
+          <label>Name:</label>
+          <input
+            type="text"
+            value={name}
+            required
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter doctor's name"
+          />
         </div>
         <div>
-          <label>Age:</label><br />
-          <input type="number" value={age} onChange={e => setAge(e.target.value)} required />
+          <label>Age:</label>
+          <input
+            type="number"
+            value={age}
+            required
+            onChange={(e) => setAge(e.target.value)}
+            placeholder="Enter doctor's age"
+          />
         </div>
         <div>
-          <label>Specialization:</label><br />
-          <input value={specialization} onChange={e => setSpecialization(e.target.value)} required />
+          <label>Specialization:</label>
+          <input
+            type="text"
+            value={specialization}
+            required
+            onChange={(e) => setSpecialization(e.target.value)}
+            placeholder="e.g., Dentist, Cardiologist"
+          />
         </div>
         <button type="submit" style={{ marginTop: '10px' }}>Add Doctor</button>
       </form>
     </div>
   );
-}
+};
+
+export default AddDoctor;

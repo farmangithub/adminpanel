@@ -1,36 +1,78 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { ref, onValue } from "firebase/database";
+import friendDatabase from "../../friendFirebase"; // Adjust path if needed
 
-const sampleDoctors = [
-  { id: 1, name: 'Dr. John Smith', age: 45, specialization: 'Cardiology' },
-  { id: 2, name: 'Dr. Anna Brown', age: 38, specialization: 'Neurology' },
-];
+function Doctors() {
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-export default function Doctors() {
-  const [doctors, setDoctors] = useState(sampleDoctors);
+  useEffect(() => {
+    const doctorsRef = ref(friendDatabase, "users/doctors");
+
+    const unsubscribe = onValue(doctorsRef, (snapshot) => {
+      const data = snapshot.val();
+
+      if (data) {
+        const doctorList = Object.entries(data).map(([id, doc]) => ({
+          id,
+          name: doc.name || "N/A",
+          category: doc.category || "N/A",
+          email: doc.email || "N/A",
+          idProof: doc["id-proof"] ? "✅ Verified" : "❌ No ID", // Simplified status
+        }));
+        setDoctors(doctorList);
+      } else {
+        setDoctors([]);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
-    <div>
-      <h2>Doctors List</h2>
-      <Link to="/doctors/add" style={{ marginBottom: '15px', display: 'inline-block' }}>+ Add Doctor</Link>
-      <table border="1" cellPadding="8" cellSpacing="0" style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead style={{ backgroundColor: '#f4f4f4' }}>
-          <tr>
-            <th>Name</th>
-            <th>Age</th>
-            <th>Specialization</th>
-          </tr>
-        </thead>
-        <tbody>
-          {doctors.map(doc => (
-            <tr key={doc.id}>
-              <td>{doc.name}</td>
-              <td>{doc.age}</td>
-              <td>{doc.specialization}</td>
+    <div style={{ padding: "20px" }}>
+      <h2>👨‍⚕️ Doctors</h2>
+      {loading ? (
+        <p>Loading doctors...</p>
+      ) : doctors.length === 0 ? (
+        <p>No doctors found.</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Name</th>
+              <th style={thStyle}>Category</th>
+              <th style={thStyle}>Email</th>
+              <th style={thStyle}>ID Verification</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {doctors.map((doc) => (
+              <tr key={doc.id}>
+                <td style={tdStyle}>{doc.name}</td>
+                <td style={tdStyle}>{doc.category}</td>
+                <td style={tdStyle}>{doc.email}</td>
+                <td style={tdStyle}>{doc.idProof}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
+
+const thStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+  background: "#f0f0f0",
+  textAlign: "left",
+};
+
+const tdStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+};
+
+export default Doctors;

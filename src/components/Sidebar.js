@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import './Sidebar.css';
-
+import { Link } from "react-router-dom";
 export default function Sidebar() {
   const navigate = useNavigate();
 
@@ -40,6 +40,8 @@ export default function Sidebar() {
       <NavLink to="/settings" className="sidebar-link" activeclassname="active-link">
         Settings
       </NavLink>
+      
+       
 
       <button className="logout-button" onClick={handleLogout}>
         Logout

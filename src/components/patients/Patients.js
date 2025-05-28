@@ -1,35 +1,80 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import { ref, onValue } from "firebase/database";
+import friendDatabase from "../../friendFirebase"; // Adjust path if needed
 
-const patients = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', contact: '123-456-7890', dob: '1985-06-15' },
-  { id: 2, name: 'Jane Roe', email: 'jane@example.com', contact: '987-654-3210', dob: '1990-08-20' },
-  { id: 3, name: 'Alex Johnson', email: 'alex@example.com', contact: '456-789-1230', dob: '1978-03-05' },
-];
+function Patients() {
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-export default function Patients() {
+  useEffect(() => {
+    const patientsRef = ref(friendDatabase, "users/patients");
+
+    const unsubscribe = onValue(patientsRef, (snapshot) => {
+      const data = snapshot.val();
+
+      if (data) {
+        const patientList = Object.entries(data).map(([id, pat]) => ({
+          id,
+          name: pat.name || "N/A",
+          email: pat.email || "N/A",
+          phone: pat.phone || "N/A",
+          profileStatus: pat["profile-picture"]
+            ? "✅ Profile Picture Updated"
+            : "❌ No Profile Picture",
+        }));
+        setPatients(patientList);
+      } else {
+        setPatients([]);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1 style={{ fontWeight: 'bold', color: '#007bff' }}>Patients</h1>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-        <thead style={{ backgroundColor: '#007bff', color: 'white' }}>
-          <tr>
-            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Name</th>
-            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Email</th>
-            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Contact</th>
-            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Date of Birth</th>
-          </tr>
-        </thead>
-        <tbody>
-          {patients.map(({ id, name, email, contact, dob }) => (
-            <tr key={id}>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{name}</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{email}</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{contact}</td>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{dob}</td>
+    <div style={{ padding: "20px" }}>
+      <h2>🧑‍🤝‍🧑 Patients</h2>
+      {loading ? (
+        <p>Loading patients...</p>
+      ) : patients.length === 0 ? (
+        <p>No patients found.</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Name</th>
+              <th style={thStyle}>Email</th>
+              <th style={thStyle}>Phone</th>
+              <th style={thStyle}>Profile Picture</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {patients.map((pat) => (
+              <tr key={pat.id}>
+                <td style={tdStyle}>{pat.name}</td>
+                <td style={tdStyle}>{pat.email}</td>
+                <td style={tdStyle}>{pat.phone}</td>
+                <td style={tdStyle}>{pat.profileStatus}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
+
+const thStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+  background: "#f0f0f0",
+  textAlign: "left",
+};
+
+const tdStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+};
+
+export default Patients;

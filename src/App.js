@@ -30,6 +30,15 @@ import Settings from './components/settings/Settings';
 // Auth Pages
 import Login from './components/Login';
 import Signup from './components/Signup';
+import Doctor from "./components/FriendDoctor";
+import Patient from './components/FriendPatient';
+
+
+
+
+
+export default App;
+
 
 function AppContent() {
   const location = useLocation();
@@ -84,6 +93,9 @@ function AppContent() {
           {/* Auth Pages */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/friend-doctors" element={<Doctor />} />
+        <Route path="/friend-patients" element={<Patient />} />
+        
         </Routes>
       </main>
     </div>
@@ -94,8 +106,10 @@ function App() {
   return (
     <Router>
       <AppContent />
+      
+      
     </Router>
   );
 }
 
-export default App;
+
