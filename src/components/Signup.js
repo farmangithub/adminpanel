@@ -19,10 +19,7 @@ export default function Signup() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(userCredential.user);
       alert("Verification email sent! Please check your inbox or spam.");
-
-      // Sign out so user cannot proceed before verification
       await signOut(auth);
-
       setEmail("");
       setPassword("");
     } catch (error) {
@@ -33,39 +30,77 @@ export default function Signup() {
   };
 
   return (
-    
-    <form
-      onSubmit={handleSignup}
+    <div
       style={{
+        border: "2px solid red",
+        borderRadius: "10px",
+        padding: "30px",
+        width: "320px",
+        margin: "100px auto",
+        boxShadow: "0 4px 12px rgba(255, 0, 0, 0.2)",
+        backgroundColor: "#fff5f5",
         textAlign: "center",
-        marginTop: 100,
-        color: "red",
-        fontWeight: "bold",
-        fontStyle: "italic",
       }}
     >
-      <h2>Signup</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{ margin: 10, padding: 10, width: 250 }}
-      />
-      <br />
-      <input
-        type="password"
-        placeholder="Password"
-        required
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ margin: 10, padding: 10, width: 250 }}
-      />
-      <br />
-      <button type="submit" disabled={loading} style={{ padding: "10px 20px" }}>
-        {loading ? "Signing up..." : "Sign Up"}
-      </button>
-    </form>
+      <form onSubmit={handleSignup}>
+        <h2 style={{ color: "red", fontWeight: "bold", fontStyle: "italic" }}>
+          Signup
+        </h2>
+
+        <label style={{ color: "blue", fontWeight: "bold", fontStyle: "italic" }}>
+          Email
+        </label>
+        <br />
+        <input
+          type="email"
+          placeholder="Enter email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            margin: "8px 0",
+            padding: "8px",
+            width: "90%",
+            fontSize: "14px",
+          }}
+        />
+        <br />
+
+        <label style={{ color: "blue", fontWeight: "bold", fontStyle: "italic" }}>
+          Password
+        </label>
+        <br />
+        <input
+          type="password"
+          placeholder="Enter password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{
+            margin: "8px 0",
+            padding: "8px",
+            width: "90%",
+            fontSize: "14px",
+          }}
+        />
+        <br />
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "red",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            marginTop: "15px",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Signing up..." : "Sign Up"}
+        </button>
+      </form>
+    </div>
   );
 }

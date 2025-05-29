@@ -12,7 +12,6 @@ export default function Login() {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
       if (userCredential.user.emailVerified) {
         navigate('/dashboard');
       } else {
@@ -25,40 +24,81 @@ export default function Login() {
   };
 
   return (
-    <form
-      onSubmit={handleLogin}
+    <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        color: 'red',
-        fontWeight: 'bold',
-        fontStyle: 'italic',
+        border: '2px solid red',
+        borderRadius: '10px',
+        padding: '30px',
+        width: '320px',
+        margin: '100px auto',
+        boxShadow: '0 4px 12px rgba(255, 0, 0, 0.2)',
+        backgroundColor: '#fff5f5',
+        textAlign: 'center',
       }}
     >
-      <h2>Login</h2>
-      <input
-        style={{ margin: '10px', padding: '8px', width: '250px' }}
-        type="email"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <input
-        style={{ margin: '10px', padding: '8px', width: '250px' }}
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <button style={{ margin: '10px', padding: '10px 20px' }} type="submit">
-        Login
-      </button>
-      <p>
-        Don't have an account? <a href="/signup">Sign up</a>
-      </p>
-    </form>
+      <form onSubmit={handleLogin}>
+        <h2 style={{ color: 'red', fontWeight: 'bold', fontStyle: 'italic' }}>Login</h2>
+
+        <label style={{ color: 'blue', fontWeight: 'bold', fontStyle: 'italic' }}>
+          Email
+        </label>
+        <br />
+        <input
+          type="email"
+          placeholder="Enter email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            margin: '8px 0',
+            padding: '8px',
+            width: '90%',
+            fontSize: '14px',
+          }}
+        />
+        <br />
+
+        <label style={{ color: 'blue', fontWeight: 'bold', fontStyle: 'italic' }}>
+          Password
+        </label>
+        <br />
+        <input
+          type="password"
+          placeholder="Enter password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{
+            margin: '8px 0',
+            padding: '8px',
+            width: '90%',
+            fontSize: '14px',
+          }}
+        />
+        <br />
+
+        <button
+          type="submit"
+          style={{
+            padding: '10px 20px',
+            backgroundColor: 'red',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            marginTop: '15px',
+            cursor: 'pointer',
+          }}
+        >
+          Login
+        </button>
+
+        <p style={{ marginTop: '15px' }}>
+          Don't have an account?{" "}
+          <a href="/signup" style={{ color: 'blue' }}>
+            Sign up
+          </a>
+        </p>
+      </form>
+    </div>
   );
 }

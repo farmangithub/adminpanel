@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
-import friendDatabase from "../../friendFirebase"; // Adjust path if needed
+import friendDatabase from "../../friendFirebase"; // Your Firebase Realtime DB instance
 
 function Patients() {
   const [patients, setPatients] = useState([]);
@@ -13,15 +13,24 @@ function Patients() {
       const data = snapshot.val();
 
       if (data) {
-        const patientList = Object.entries(data).map(([id, pat]) => ({
-          id,
-          name: pat.name || "N/A",
-          email: pat.email || "N/A",
-          phone: pat.phone || "N/A",
-          profileStatus: pat["profile-picture"]
-            ? "✅ Profile Picture Updated"
-            : "❌ No Profile Picture",
-        }));
+        const patientList = Object.entries(data).map(([id, pat]) => {
+          let profilePic = pat["profile-picture"] || null;
+
+          // If profilePic is raw base64 without data URI, prepend the prefix
+          if (profilePic && !profilePic.startsWith("data:image/")) {
+            profilePic = `data:image/png;base64,${profilePic}`;
+          }
+
+          return {
+            id,
+            name: pat.name || "N/A",
+            email: pat.email || "N/A",
+            profilePicture: profilePic,
+            profileStatus: profilePic
+              ? "✅ Profile Picture Updated"
+              : "❌ Profile Picture Not Updated",
+          };
+        });
         setPatients(patientList);
       } else {
         setPatients([]);
@@ -45,8 +54,8 @@ function Patients() {
             <tr>
               <th style={thStyle}>Name</th>
               <th style={thStyle}>Email</th>
-              <th style={thStyle}>Phone</th>
               <th style={thStyle}>Profile Picture</th>
+              <th style={thStyle}>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -54,7 +63,17 @@ function Patients() {
               <tr key={pat.id}>
                 <td style={tdStyle}>{pat.name}</td>
                 <td style={tdStyle}>{pat.email}</td>
-                <td style={tdStyle}>{pat.phone}</td>
+                <td style={tdStyle}>
+                  {pat.profilePicture ? (
+                    <img
+                      src={pat.profilePicture}
+                      alt="Profile"
+                      style={{ width: "60px", height: "60px", borderRadius: "50%" }}
+                    />
+                  ) : (
+                    "No Picture"
+                  )}
+                </td>
                 <td style={tdStyle}>{pat.profileStatus}</td>
               </tr>
             ))}

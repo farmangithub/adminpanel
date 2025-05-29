@@ -1,6 +1,7 @@
 // src/friendFirebase.js
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
+import { getStorage } from "firebase/storage";
 
 const friendFirebaseConfig = {
   apiKey: "AIzaSyAIbWQUJc8JydO_2gVGwUBe9T16joZ0TpU",
@@ -14,5 +15,7 @@ const friendFirebaseConfig = {
 
 const friendApp = initializeApp(friendFirebaseConfig, "friendApp");
 const friendDatabase = getDatabase(friendApp);
+const friendStorage = getStorage(); // ✅ Add this line
 
 export default friendDatabase;
+export { friendStorage }; // ✅ Export storage separately

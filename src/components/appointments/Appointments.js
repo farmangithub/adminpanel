@@ -5,6 +5,20 @@ import friendDatabase from "../../friendFirebase";
 function Appointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [patientMap, setPatientMap] = useState({});
+
+  useEffect(() => {
+    // Fetch patient names and map userId to patient name
+    const patientsRef = ref(friendDatabase, "users/patients");
+    onValue(patientsRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const map = {};
+      for (let uid in data) {
+        map[uid] = data[uid].name || "Unknown Patient";
+      }
+      setPatientMap(map);
+    });
+  }, []);
 
   useEffect(() => {
     const appointmentsRef = ref(friendDatabase, "appointments");
@@ -18,7 +32,7 @@ function Appointments() {
           Object.entries(userAppointments).forEach(([appointmentId, apt]) => {
             tempAppointments.push({
               id: appointmentId,
-              userId: userId,
+              patientName: patientMap[userId] || "Unknown",
               doctorName: apt.doctorName || "N/A",
               consultationType: apt.consultationType || "N/A",
               day: apt.day || "N/A",
@@ -35,7 +49,7 @@ function Appointments() {
       setAppointments(tempAppointments);
       setLoading(false);
     });
-  }, []);
+  }, [patientMap]);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -49,7 +63,7 @@ function Appointments() {
           <thead>
             <tr>
               <th style={thStyle}>Appointment ID</th>
-              <th style={thStyle}>User ID</th>
+              <th style={thStyle}>Patient Name</th>
               <th style={thStyle}>Doctor Name</th>
               <th style={thStyle}>Consultation Type</th>
               <th style={thStyle}>Day</th>
@@ -62,7 +76,7 @@ function Appointments() {
             {appointments.map((apt) => (
               <tr key={apt.id}>
                 <td style={tdStyle}>{apt.id}</td>
-                <td style={tdStyle}>{apt.userId}</td>
+                <td style={tdStyle}>{apt.patientName}</td>
                 <td style={tdStyle}>{apt.doctorName}</td>
                 <td style={tdStyle}>{apt.consultationType}</td>
                 <td style={tdStyle}>{apt.day}</td>
