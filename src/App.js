@@ -30,15 +30,10 @@ import Settings from './components/settings/Settings';
 // Auth Pages
 import Login from './components/Login';
 import Signup from './components/Signup';
-import Doctor from "./components/FriendDoctor";
-import Patient from './components/FriendPatient';
 
-
-
-
-
-export default App;
-
+// Friend (Admin Panel) Pages
+import FriendDoctor from './components/FriendDoctor';
+import FriendPatient from './components/FriendPatient';
 
 function AppContent() {
   const location = useLocation();
@@ -47,22 +42,18 @@ function AppContent() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Listen for Firebase Auth state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // If user is NOT authenticated and NOT on login/signup, redirect to login
   if (!user && !isAuthRoute) {
     return <Navigate to="/login" replace />;
   }
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Hide sidebar on login/signup */}
       {!isAuthRoute && <Sidebar />}
 
       <main style={{ flex: 1, padding: '20px' }}>
@@ -93,9 +84,10 @@ function AppContent() {
           {/* Auth Pages */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/friend-doctors" element={<Doctor />} />
-        <Route path="/friend-patients" element={<Patient />} />
-        
+
+          {/* Admin Panel: Friend Pages */}
+          <Route path="/friend-doctors" element={<FriendDoctor />} />
+          <Route path="/friend-patients" element={<FriendPatient />} />
         </Routes>
       </main>
     </div>
@@ -106,10 +98,8 @@ function App() {
   return (
     <Router>
       <AppContent />
-      
-      
     </Router>
   );
 }
 
-
+export default App;

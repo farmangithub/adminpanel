@@ -1,55 +1,117 @@
 import React, { useEffect, useState } from "react";
-import { ref, onValue } from "firebase/database";
-import friendDatabase from "../friendFirebase"; // Adjust import if default export
+import { ref as dbRef, onValue, update } from "firebase/database";
+import { ref as storageRef, getDownloadURL } from "firebase/storage";
+import { database, friendStorage } from "../friendFirebase"; // ✅ adjust path
 
-function FriendDoctor() {
+function Doctors() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const doctorsRef = ref(friendDatabase, "users/doctors");
+    const doctorsRef = dbRef(database, "users/doctors");
+    onValue(doctorsRef, async (snapshot) => {
+      const data = snapshot.val() || {};
+      const doctorList = await Promise.all(
+        Object.entries(data).map(async ([id, doc]) => {
+          let idProofUrl = null;
 
-    const unsubscribe = onValue(doctorsRef, (snapshot) => {
-      const data = snapshot.val();
-      console.log("Doctors data from friend Firebase:", data);
+          // Fetch ID proof image from Firebase Storage
+          const idPath = doc.services?.eyecare?.["id-proof"];
+          if (idPath) {
+            try {
+              idProofUrl = await getDownloadURL(storageRef(friendStorage, idPath));
+            } catch (err) {
+              console.log("Error fetching ID image:", err);
+            }
+          }
 
-      if (data) {
-        // data here is an object of doctorId -> doctorData
-        const doctorList = Object.entries(data).map(([id, doctor]) => ({
-          id,
-          ...doctor,
-        }));
-
-        setDoctors(doctorList);
-      } else {
-        setDoctors([]);
-      }
-
+          return {
+            id,
+            name: doc.name || "N/A",
+            email: doc.email || "N/A",
+            category: doc.services?.eyecare?.["service offered"] || doc.category || "N/A",
+            verificationStatus: doc.services?.eyecare?.["verification-status"] || "Not Verified",
+            idProofUrl,
+          };
+        })
+      );
+      setDoctors(doctorList);
       setLoading(false);
     });
-
-    return () => unsubscribe();
   }, []);
 
+  // Handle verifying doctor
+  const handleVerify = (doctorId) => {
+    const doctorStatusRef = dbRef(database, `users/doctors/${doctorId}/services/eyecare/verification-status`);
+    update(doctorStatusRef, "Verified")
+      .then(() => {
+        setDoctors((prev) =>
+          prev.map((doc) =>
+            doc.id === doctorId ? { ...doc, verificationStatus: "Verified" } : doc
+          )
+        );
+      })
+      .catch((err) => console.log("Error verifying doctor:", err));
+  };
+
+  if (loading) return <p>Loading doctors...</p>;
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>👨‍⚕️ List of Doctors</h2>
-      {loading ? (
-        <p>Loading doctors...</p>
-      ) : doctors.length === 0 ? (
-        <p>No doctors found.</p>
-      ) : (
-        <ul>
+    <div style={{ padding: 20 }}>
+      <h2>👨‍⚕️ Doctors</h2>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ backgroundColor: "#f0f0f0" }}>
+            <th style={thStyle}>Name</th>
+            <th style={thStyle}>Category</th>
+            <th style={thStyle}>Email</th>
+            <th style={thStyle}>ID Proof</th>
+            <th style={thStyle}>Verification Status</th>
+            <th style={thStyle}>Action</th>
+          </tr>
+        </thead>
+        <tbody>
           {doctors.map((doc) => (
-            <li key={doc.id} style={{ marginBottom: "10px" }}>
-              <strong>Name:</strong> {doc.name || "N/A"} <br />
-              <strong>Specialty:</strong> {doc.specialty || "N/A"}
-            </li>
+            <tr key={doc.id}>
+              <td style={tdStyle}>{doc.name}</td>
+              <td style={tdStyle}>{doc.category}</td>
+              <td style={tdStyle}>{doc.email}</td>
+              <td style={tdStyle}>
+                {doc.idProofUrl ? (
+                  <img
+                    src={doc.idProofUrl}
+                    alt="ID Proof"
+                    style={{ width: 100, borderRadius: 5 }}
+                  />
+                ) : (
+                  "No ID Uploaded"
+                )}
+              </td>
+              <td style={tdStyle}>{doc.verificationStatus}</td>
+              <td style={tdStyle}>
+                {doc.verificationStatus !== "Verified" && doc.idProofUrl ? (
+                  <button onClick={() => handleVerify(doc.id)}>Verify</button>
+                ) : (
+                  "—"
+                )}
+              </td>
+            </tr>
           ))}
-        </ul>
-      )}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-export default FriendDoctor;
+const thStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+  textAlign: "left",
+};
+
+const tdStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+};
+
+export default Doctors;

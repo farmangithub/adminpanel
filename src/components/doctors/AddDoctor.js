@@ -1,68 +1,84 @@
-import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import React, { useState } from "react";
+import { ref, push, set } from "firebase/database";
+import { database } from "../../friendFirebase";
 
 const AddDoctor = () => {
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-  const [specialization, setSpecialization] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [category, setCategory] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!name || !email || !category) {
+      setMessage("Please fill all fields");
+      return;
+    }
+
     try {
-      await addDoc(collection(db, 'doctors'), {
+      const doctorsRef = ref(database, "users/doctors");
+      const newDoctorRef = push(doctorsRef);
+
+      // Set doctor data with proper services structure
+      await set(newDoctorRef, {
         name,
-        age,
-        specialization,
-        createdAt: new Date()
+        email,
+        createdAt: Date.now(),
+        services: {
+          eyecare: {
+            "service-offered": category,
+            "id-proof": false,
+            "selfie-with-id": null, // Initially null
+            "verification-status": "Not Verified", // Important for admin verification
+            token: null,
+          },
+        },
       });
-      setSuccessMsg(`Doctor Added: ${name}, Age: ${age}, Specialization: ${specialization}`);
-      setName('');
-      setAge('');
-      setSpecialization('');
+
+      setMessage("Doctor added successfully!");
+      setName("");
+      setEmail("");
+      setCategory("");
     } catch (error) {
-      console.error('Error adding doctor:', error);
+      setMessage("Error adding doctor: " + error.message);
     }
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+    <div style={{ maxWidth: "500px", margin: "auto", padding: "20px" }}>
       <h2>Add Doctor</h2>
-      {successMsg && <p style={{ color: 'green' }}>{successMsg}</p>}
+      {message && <p>{message}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <label>Name:</label>
           <input
             type="text"
             value={name}
-            required
             onChange={(e) => setName(e.target.value)}
-            placeholder="Enter doctor's name"
+            placeholder="Enter doctor name"
           />
         </div>
         <div>
-          <label>Age:</label>
+          <label>Email:</label>
           <input
-            type="number"
-            value={age}
-            required
-            onChange={(e) => setAge(e.target.value)}
-            placeholder="Enter doctor's age"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter doctor email"
           />
         </div>
         <div>
-          <label>Specialization:</label>
+          <label>Category / Service:</label>
           <input
             type="text"
-            value={specialization}
-            required
-            onChange={(e) => setSpecialization(e.target.value)}
-            placeholder="e.g., Dentist, Cardiologist"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Enter service category"
           />
         </div>
-        <button type="submit" style={{ marginTop: '10px' }}>Add Doctor</button>
+        <br />
+        <button type="submit">Add Doctor</button>
       </form>
     </div>
   );

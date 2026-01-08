@@ -1,7 +1,20 @@
+// src/components/appointments/AppointmentCharts.js
 import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
-import { PieChart, Pie, Cell, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import friendDatabase from "../../friendFirebase";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+} from "recharts";
+
+import { database } from "../friendFirebase"; // ✅ Correct import
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
@@ -10,7 +23,7 @@ function AppointmentCharts() {
   const [lineData, setLineData] = useState([]);
 
   useEffect(() => {
-    const appointmentsRef = ref(friendDatabase, "appointments");
+    const appointmentsRef = ref(database, "appointments"); // ✅ updated here
     onValue(appointmentsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {

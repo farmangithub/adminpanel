@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
-import friendDatabase from "../../friendFirebase"; // Adjust path if needed
+import { database } from "../../friendFirebase"; // ✅ Correct relative path
 
 function Doctors() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const doctorsRef = ref(friendDatabase, "users/doctors");
+    const doctorsRef = ref(database, "users/doctors");
 
     const unsubscribe = onValue(doctorsRef, (snapshot) => {
       const data = snapshot.val();
@@ -18,7 +18,7 @@ function Doctors() {
           name: doc.name || "N/A",
           category: doc.category || "N/A",
           email: doc.email || "N/A",
-          idProof: doc["id-proof"] ? "✅ Verified" : "❌ No ID", // Simplified status
+          idProof: doc["id-proof"] ? "✅ Verified" : "❌ No ID",
         }));
         setDoctors(doctorList);
       } else {

@@ -13,9 +13,13 @@ const friendFirebaseConfig = {
   appId: "1:53059995467:android:2a38f8bd13ca297c65cace"
 };
 
+// Initialize Firebase App
 const friendApp = initializeApp(friendFirebaseConfig, "friendApp");
-const friendDatabase = getDatabase(friendApp);
-const friendStorage = getStorage(); // ✅ Add this line
 
-export default friendDatabase;
-export { friendStorage }; // ✅ Export storage separately
+// Realtime Database instance
+const database = getDatabase(friendApp);
+
+// Storage instance
+const friendStorage = getStorage(friendApp);
+
+export { database, friendStorage };

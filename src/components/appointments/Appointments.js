@@ -1,15 +1,15 @@
+import { ref, onValue, update } from "firebase/database";
+import { database } from "../../friendFirebase"; // ✅ Use named import
 import React, { useEffect, useState } from "react";
-import { ref, onValue } from "firebase/database";
-import friendDatabase from "../../friendFirebase";
 
 function Appointments() {
   const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [patientMap, setPatientMap] = useState({});
+  const [loading, setLoading] = useState(true);
 
+  // Fetch patients to map userId → name
   useEffect(() => {
-    // Fetch patient names and map userId to patient name
-    const patientsRef = ref(friendDatabase, "users/patients");
+    const patientsRef = ref(database, "users/patients"); // ✅ use database
     onValue(patientsRef, (snapshot) => {
       const data = snapshot.val() || {};
       const map = {};
@@ -20,30 +20,28 @@ function Appointments() {
     });
   }, []);
 
+  // Fetch appointments
   useEffect(() => {
-    const appointmentsRef = ref(friendDatabase, "appointments");
-
+    const appointmentsRef = ref(database, "appointments"); // ✅ use database
     onValue(appointmentsRef, (snapshot) => {
-      const data = snapshot.val();
+      const data = snapshot.val() || {};
       const tempAppointments = [];
 
-      if (data) {
-        Object.entries(data).forEach(([userId, userAppointments]) => {
-          Object.entries(userAppointments).forEach(([appointmentId, apt]) => {
-            tempAppointments.push({
-              id: appointmentId,
-              patientName: patientMap[userId] || "Unknown",
-              doctorName: apt.doctorName || "N/A",
-              consultationType: apt.consultationType || "N/A",
-              day: apt.day || "N/A",
-              start: apt.start || "N/A",
-              end: apt.end || "N/A",
-              timestamp: apt.timestamp
-                ? new Date(apt.timestamp).toLocaleString()
-                : "N/A",
-            });
+      for (const userId in data) {
+        const userAppointments = data[userId] || {};
+        for (const appointmentId in userAppointments) {
+          const apt = userAppointments[appointmentId];
+          tempAppointments.push({
+            id: appointmentId,
+            userId,
+            patientName: patientMap[userId] || "Unknown Patient",
+            doctorName: apt.doctorName || "N/A",
+            start: apt.start || "N/A",
+            end: apt.end || "N/A",
+            status: apt.status || "Pending",
+            timestamp: apt.timestamp || null,
           });
-        });
+        }
       }
 
       setAppointments(tempAppointments);
@@ -51,38 +49,70 @@ function Appointments() {
     });
   }, [patientMap]);
 
+  const approveAppointment = (userId, appointmentId) => {
+    const aptRef = ref(database, `appointments/${userId}/${appointmentId}`);
+    update(aptRef, { status: "Approved" });
+  };
+
+  if (loading) return <p>Loading appointments...</p>;
+
   return (
     <div style={{ padding: "20px" }}>
       <h2>📅 Appointments</h2>
-      {loading ? (
-        <p>Loading appointments...</p>
-      ) : appointments.length === 0 ? (
+      {appointments.length === 0 ? (
         <p>No appointments found.</p>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr>
-              <th style={thStyle}>Appointment ID</th>
-              <th style={thStyle}>Patient Name</th>
-              <th style={thStyle}>Doctor Name</th>
-              <th style={thStyle}>Consultation Type</th>
-              <th style={thStyle}>Day</th>
+            <tr style={{ backgroundColor: "#f0f0f0" }}>
+              <th style={thStyle}>Patient</th>
+              <th style={thStyle}>Doctor</th>
               <th style={thStyle}>Start</th>
               <th style={thStyle}>End</th>
-              <th style={thStyle}>Timestamp</th>
+              <th style={thStyle}>Status</th>
+              <th style={thStyle}>Action</th>
             </tr>
           </thead>
           <tbody>
             {appointments.map((apt) => (
-              <tr key={apt.id}>
-                <td style={tdStyle}>{apt.id}</td>
+              <tr key={apt.id} style={{ backgroundColor: "#fff" }}>
                 <td style={tdStyle}>{apt.patientName}</td>
                 <td style={tdStyle}>{apt.doctorName}</td>
-                <td style={tdStyle}>{apt.consultationType}</td>
-                <td style={tdStyle}>{apt.day}</td>
                 <td style={tdStyle}>{apt.start}</td>
                 <td style={tdStyle}>{apt.end}</td>
-                <td style={tdStyle}>{apt.timestamp}</td>
+                <td
+                  style={{
+                    ...tdStyle,
+                    color:
+                      apt.status.toLowerCase() === "approved"
+                        ? "green"
+                        : apt.status.toLowerCase() === "pending"
+                        ? "orange"
+                        : "red",
+                    fontWeight: "600",
+                  }}
+                >
+                  {apt.status}
+                </td>
+                <td style={tdStyle}>
+                  {apt.status === "Pending" ? (
+                    <button
+                      onClick={() => approveAppointment(apt.userId, apt.id)}
+                      style={{
+                        padding: "5px 10px",
+                        backgroundColor: "green",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Approve
+                    </button>
+                  ) : (
+                    <span>—</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -95,7 +125,6 @@ function Appointments() {
 const thStyle = {
   border: "1px solid #ccc",
   padding: "10px",
-  background: "#f0f0f0",
   textAlign: "left",
 };
 

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
-import friendDatabase from "../../friendFirebase"; // Your Firebase Realtime DB instance
+import { database } from "../../friendFirebase"; // ✅ Correct import
 
 function Patients() {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const patientsRef = ref(friendDatabase, "users/patients");
+    const patientsRef = ref(database, "users/patients");
 
     const unsubscribe = onValue(patientsRef, (snapshot) => {
       const data = snapshot.val();

@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
-import friendDatabase from "../friendFirebase";
+import { database } from "../friendFirebase"; // ✅ Correct import
 
 function FriendPatient() {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const patientsRef = ref(friendDatabase, "users/patients");
+    const patientsRef = ref(database, "users/patients");
 
     const unsubscribe = onValue(patientsRef, (snapshot) => {
       const data = snapshot.val();
-
       if (data) {
-        const patientList = Object.entries(data).map(([id, patient]) => ({
+        const patientList = Object.entries(data).map(([id, pat]) => ({
           id,
-          ...patient,
+          name: pat.name || "N/A",
+          email: pat.email || "N/A",
+          verified: pat.verified || false,
         }));
         setPatients(patientList);
       } else {
@@ -29,39 +30,45 @@ function FriendPatient() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>🧑‍🤝‍🧑 List of Patients</h2>
+      <h2>🧑‍🤝‍🧑 Patients (Admin Panel)</h2>
       {loading ? (
         <p>Loading patients...</p>
       ) : patients.length === 0 ? (
         <p>No patients found.</p>
       ) : (
-        patients.map((patient) => (
-          <div
-            key={patient.id}
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              padding: "15px",
-              marginBottom: "20px",
-            }}
-          >
-            <h3>{patient.name || "N/A"}</h3>
-            <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
-              {Object.entries(patient).map(([key, value]) => {
-                if (key === "id" || key === "name") return null; // skip id and name here
-                return (
-                  <li key={key}>
-                    <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong>{" "}
-                    {value ? value.toString() : "N/A"}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Name</th>
+              <th style={thStyle}>Email</th>
+              <th style={thStyle}>Verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            {patients.map((pat) => (
+              <tr key={pat.id}>
+                <td style={tdStyle}>{pat.name}</td>
+                <td style={tdStyle}>{pat.email}</td>
+                <td style={tdStyle}>{pat.verified ? "✅ Verified" : "❌ Pending"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
 }
+
+const thStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+  background: "#f0f0f0",
+  textAlign: "left",
+};
+
+const tdStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+};
 
 export default FriendPatient;
